@@ -1,7 +1,7 @@
 author: mongoose-os
 name: rpc-mqtt
 type: lib
-description: MQTT channel for mOS RPC
+description: Implements Mongoose OS RPC over MQTT protocol
 version: 1.0
 sources:
   - src
@@ -12,5 +12,6 @@ config_schema:
 tags:
   - rpc
   - mqtt
+  - cloud
 
 skeleton_version: 2017-05-18
