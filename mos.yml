@@ -1,0 +1,16 @@
+author: mongoose-os
+name: rpc-mqtt
+type: lib
+description: MQTT channel for mOS RPC
+version: 1.0
+sources:
+  - src
+config_schema:
+  - ["rpc.mqtt", "o", {title: "RPC over MQTT settings"}]
+  - ["rpc.mqtt.enable", "b", true, {title: "Enable RPC over MQTT"}]
+  - ["rpc.mqtt.is_trusted", "b", true, {title: "Whether this channel can be used for privileged commands, such as changing configuration"}]
+tags:
+  - rpc
+  - mqtt
+
+skeleton_version: 2017-05-18
