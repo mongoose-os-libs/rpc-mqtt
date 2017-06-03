@@ -14,9 +14,10 @@
 #include "mongoose/mongoose.h"
 
 #include "fw/src/mgos_hal.h"
-#include "fw/src/mgos_mqtt.h"
 #include "fw/src/mgos_rpc.h"
 #include "fw/src/mgos_sys_config.h"
+
+#include "mgos_mqtt.h"
 
 #define CH_FLAGS(ch) ((uintptr_t)(ch)->channel_data)
 #define CH_FLAGS_SET(ch, v) (ch)->channel_data = (void *) (uintptr_t)(v)
