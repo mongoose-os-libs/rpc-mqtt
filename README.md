@@ -1,4 +1,6 @@
-# MQTT channel for mOS RPC
+# Implementation of Mongoose OS RPC over MQTT protocol
+
+## Overview
 
 MQTT RPC channel allows invoking RPC calls via MQTT. For example, assuming
 your device id is `esp8266_DA7E15`, this command could be invoked to get
