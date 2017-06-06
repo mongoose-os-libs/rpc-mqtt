@@ -1,8 +1,8 @@
 author: mongoose-os
-name: rpc-mqtt
-type: lib
 description: Implements Mongoose OS RPC over MQTT protocol
+type: lib
 version: 1.0
+
 sources:
   - src
 config_schema:
@@ -11,9 +11,12 @@ config_schema:
   - ["rpc.mqtt.is_trusted", "b", true, {title: "Whether this channel can be used for privileged commands, such as changing configuration"}]
 libs:
   - origin: https://github.com/mongoose-os-libs/mqtt
+
 tags:
   - rpc
   - mqtt
   - cloud
+  - c
+  - js
 
 skeleton_version: 2017-05-18
