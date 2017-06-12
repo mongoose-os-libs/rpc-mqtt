@@ -3,18 +3,18 @@
  * All rights reserved
  */
 
-#include "mgos_rpc_channel_mqtt.h"
-
 #include <stdlib.h>
 
+#include "mgos_rpc_channel_mqtt.h"
+#include "mg_rpc.h"
+#include "mgos_rpc.h"
+
 #include "common/cs_dbg.h"
-#include "common/mg_rpc/mg_rpc.h"
 #include "common/mg_str.h"
 #include "frozen/frozen.h"
 #include "mongoose/mongoose.h"
 
 #include "fw/src/mgos_hal.h"
-#include "fw/src/mgos_rpc.h"
 #include "fw/src/mgos_sys_config.h"
 
 #include "mgos_mqtt.h"
