@@ -152,10 +152,10 @@ bool mgos_rpc_mqtt_init(void) {
   const struct sys_config_rpc *sccfg = &get_cfg()->rpc;
   if (sccfg->mqtt.enable) {
     struct mg_rpc_channel *mch =
-      mg_rpc_channel_mqtt(mg_mk_str(get_cfg()->device.id));
+        mg_rpc_channel_mqtt(mg_mk_str(get_cfg()->device.id));
     if (mch == NULL) return MGOS_INIT_MG_RPC_FAILED;
-    mg_rpc_add_channel(mgos_rpc_get_global(), mg_mk_str(MG_RPC_DST_DEFAULT), mch,
-        sccfg->mqtt.is_trusted);
+    mg_rpc_add_channel(mgos_rpc_get_global(), mg_mk_str(MG_RPC_DST_DEFAULT),
+                       mch, sccfg->mqtt.is_trusted);
   }
   return true;
 }
