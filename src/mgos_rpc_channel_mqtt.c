@@ -126,6 +126,11 @@ static bool mg_rpc_channel_mqtt_is_persistent(struct mg_rpc_channel *ch) {
   return true;
 }
 
+static char *mg_rpc_channel_mqtt_get_info(struct mg_rpc_channel *ch) {
+  (void) ch;
+  return NULL;
+}
+
 struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
   char *topic = mgos_rpc_mqtt_topic_name(device_id, true);
   struct mg_rpc_channel *ch = (struct mg_rpc_channel *) calloc(1, sizeof(*ch));
@@ -135,6 +140,7 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
   ch->ch_destroy = mg_rpc_channel_mqtt_ch_destroy;
   ch->get_type = mg_rpc_channel_mqtt_get_type;
   ch->is_persistent = mg_rpc_channel_mqtt_is_persistent;
+  ch->get_info = mg_rpc_channel_mqtt_get_info;
 
   /* subscribe on both wildcard topic, and bare /rpc topic */
   mgos_mqtt_global_subscribe(mg_mk_str(topic), mgos_rpc_mqtt_sub_handler, ch);
