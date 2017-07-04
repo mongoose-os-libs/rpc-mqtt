@@ -161,7 +161,7 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
 
 bool mgos_rpc_mqtt_init(void) {
   const struct sys_config_rpc *sccfg = &get_cfg()->rpc;
-  if (sccfg->mqtt.enable) {
+  if (mgos_rpc_get_global() != NULL && sccfg->mqtt.enable) {
     struct mg_rpc_channel *mch =
         mg_rpc_channel_mqtt(mg_mk_str(get_cfg()->device.id));
     if (mch == NULL) return MGOS_INIT_MG_RPC_FAILED;
