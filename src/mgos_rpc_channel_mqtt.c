@@ -14,8 +14,8 @@
 #include "frozen/frozen.h"
 #include "mongoose/mongoose.h"
 
-#include "fw/src/mgos_hal.h"
-#include "fw/src/mgos_sys_config.h"
+#include "mgos_hal.h"
+#include "mgos_sys_config.h"
 
 #include "mgos_mqtt.h"
 
