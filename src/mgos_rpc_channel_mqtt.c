@@ -126,6 +126,14 @@ static const char *mg_rpc_channel_mqtt_get_type(struct mg_rpc_channel *ch) {
   return "MQTT";
 }
 
+static bool mg_rpc_channel_mqtt_get_authn_info(struct mg_rpc_channel *ch,
+                                               struct mg_rpc_authn *authn) {
+  (void) ch;
+  (void) authn;
+
+  return false;
+}
+
 static bool mg_rpc_channel_mqtt_is_persistent(struct mg_rpc_channel *ch) {
   (void) ch;
   return true;
@@ -145,6 +153,7 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
   ch->ch_destroy = mg_rpc_channel_mqtt_ch_destroy;
   ch->get_type = mg_rpc_channel_mqtt_get_type;
   ch->is_persistent = mg_rpc_channel_mqtt_is_persistent;
+  ch->get_authn_info = mg_rpc_channel_mqtt_get_authn_info;
   ch->get_info = mg_rpc_channel_mqtt_get_info;
 
   /* subscribe on both wildcard topic, and bare /rpc topic */
