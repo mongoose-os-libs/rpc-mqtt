@@ -29,8 +29,8 @@ static char *mgos_rpc_mqtt_topic_name(const struct mg_str device_id,
                                       bool wildcard) {
   char *topic = NULL;
   if (get_cfg()->rpc.mqtt.topic != NULL) {
-    mg_asprintf(&topic, 0, "%s%s", (int) device_id.len,
-                get_cfg()->rpc.mqtt.topic, (wildcard ? "/#" : ""));
+    mg_asprintf(&topic, 0, "%s%s", get_cfg()->rpc.mqtt.topic,
+                (wildcard ? "/#" : ""));
   } else {
     mg_asprintf(&topic, 0, "%.*s/rpc%s", (int) device_id.len,
                 (device_id.p ? device_id.p : ""), (wildcard ? "/#" : ""));
