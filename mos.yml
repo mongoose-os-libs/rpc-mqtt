@@ -5,6 +5,8 @@ version: 1.0
 
 sources:
   - src
+includes:
+  - include
 config_schema:
   - ["rpc.mqtt", "o", {title: "RPC over MQTT settings"}]
   - ["rpc.mqtt.enable", "b", true, {title: "Enable RPC over MQTT"}]
