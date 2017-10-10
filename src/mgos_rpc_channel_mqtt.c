@@ -28,8 +28,8 @@
 static char *mgos_rpc_mqtt_topic_name(const struct mg_str device_id,
                                       bool wildcard) {
   char *topic = NULL;
-  if (get_cfg()->rpc.mqtt.topic != NULL) {
-    mg_asprintf(&topic, 0, "%s%s", get_cfg()->rpc.mqtt.topic,
+  if (mgos_sys_config_get_rpc_mqtt_topic() != NULL) {
+    mg_asprintf(&topic, 0, "%s%s", mgos_sys_config_get_rpc_mqtt_topic(),
                 (wildcard ? "/#" : ""));
   } else {
     mg_asprintf(&topic, 0, "%.*s/rpc%s", (int) device_id.len,
@@ -54,8 +54,8 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
   }
   struct mg_mqtt_message *msg = (struct mg_mqtt_message *) ev_data;
   if (msg->qos > 0) mg_mqtt_puback(nc, msg->message_id);
-  char *bare_topic =
-      mgos_rpc_mqtt_topic_name(mg_mk_str(get_cfg()->device.id), false);
+  char *bare_topic = mgos_rpc_mqtt_topic_name(
+      mg_mk_str(mgos_sys_config_get_device_id()), false);
   size_t bare_topic_len = strlen(bare_topic);
   free(bare_topic);
 
@@ -169,13 +169,12 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
 }
 
 bool mgos_rpc_mqtt_init(void) {
-  const struct sys_config_rpc *sccfg = &get_cfg()->rpc;
-  if (mgos_rpc_get_global() != NULL && sccfg->mqtt.enable) {
+  if (mgos_rpc_get_global() != NULL && mgos_sys_config_get_rpc_mqtt_enable()) {
     struct mg_rpc_channel *mch =
-        mg_rpc_channel_mqtt(mg_mk_str(get_cfg()->device.id));
+        mg_rpc_channel_mqtt(mg_mk_str(mgos_sys_config_get_device_id()));
     if (mch == NULL) return MGOS_INIT_MG_RPC_FAILED;
     mg_rpc_add_channel(mgos_rpc_get_global(), mg_mk_str(MG_RPC_DST_DEFAULT),
-                       mch, sccfg->mqtt.is_trusted);
+                       mch, mgos_sys_config_get_rpc_mqtt_is_trusted());
   }
   return true;
 }
