@@ -19,7 +19,6 @@ libs:
 tags:
   - rpc
   - mqtt
-  - cloud
   - c
   - js
 
