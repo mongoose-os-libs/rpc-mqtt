@@ -127,8 +127,12 @@ static const char *mg_rpc_channel_mqtt_get_type(struct mg_rpc_channel *ch) {
 }
 
 static bool mg_rpc_channel_mqtt_get_authn_info(struct mg_rpc_channel *ch,
+                                               const char *auth_domain,
+                                               const char *auth_file,
                                                struct mg_rpc_authn *authn) {
   (void) ch;
+  (void) auth_domain;
+  (void) auth_file;
   (void) authn;
 
   return false;
