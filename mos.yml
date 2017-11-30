@@ -11,7 +11,6 @@ config_schema:
   - ["rpc.mqtt", "o", {title: "RPC over MQTT settings"}]
   - ["rpc.mqtt.enable", "b", true, {title: "Enable RPC over MQTT"}]
   - ["rpc.mqtt.topic", "s", "", {title: "Topic to use for RPC requests and responses. The default is ${device.id}/rpc"}]
-  - ["rpc.mqtt.is_trusted", "b", true, {title: "Whether this channel can be used for privileged commands, such as changing configuration"}]
 libs:
   - origin: https://github.com/mongoose-os-libs/mqtt
   - origin: https://github.com/mongoose-os-libs/rpc-common

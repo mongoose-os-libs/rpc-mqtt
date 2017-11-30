@@ -178,7 +178,7 @@ bool mgos_rpc_mqtt_init(void) {
         mg_rpc_channel_mqtt(mg_mk_str(mgos_sys_config_get_device_id()));
     if (mch == NULL) return MGOS_INIT_MG_RPC_FAILED;
     mg_rpc_add_channel(mgos_rpc_get_global(), mg_mk_str(MG_RPC_DST_DEFAULT),
-                       mch, mgos_sys_config_get_rpc_mqtt_is_trusted());
+                       mch);
   }
   return true;
 }
