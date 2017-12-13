@@ -138,11 +138,6 @@ static bool mg_rpc_channel_mqtt_get_authn_info(struct mg_rpc_channel *ch,
   return false;
 }
 
-static bool mg_rpc_channel_mqtt_is_persistent(struct mg_rpc_channel *ch) {
-  (void) ch;
-  return true;
-}
-
 static char *mg_rpc_channel_mqtt_get_info(struct mg_rpc_channel *ch) {
   (void) ch;
   return NULL;
@@ -156,7 +151,9 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
   ch->ch_close = mg_rpc_channel_mqtt_ch_close;
   ch->ch_destroy = mg_rpc_channel_mqtt_ch_destroy;
   ch->get_type = mg_rpc_channel_mqtt_get_type;
-  ch->is_persistent = mg_rpc_channel_mqtt_is_persistent;
+  ch->is_persistent = mg_rpc_channel_true;
+  /* Cannot broadcast, need specific destination */
+  ch->is_broadcast_enabled = mg_rpc_channel_false;
   ch->get_authn_info = mg_rpc_channel_mqtt_get_authn_info;
   ch->get_info = mg_rpc_channel_mqtt_get_info;
 
