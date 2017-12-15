@@ -126,10 +126,9 @@ static const char *mg_rpc_channel_mqtt_get_type(struct mg_rpc_channel *ch) {
   return "MQTT";
 }
 
-static bool mg_rpc_channel_mqtt_get_authn_info(struct mg_rpc_channel *ch,
-                                               const char *auth_domain,
-                                               const char *auth_file,
-                                               struct mg_rpc_authn *authn) {
+static bool mg_rpc_channel_mqtt_get_authn_info(
+    struct mg_rpc_channel *ch, const char *auth_domain, const char *auth_file,
+    struct mg_rpc_authn_info *authn) {
   (void) ch;
   (void) auth_domain;
   (void) auth_file;
@@ -170,7 +169,8 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
 }
 
 bool mgos_rpc_mqtt_init(void) {
-  if (mgos_rpc_get_global() != NULL && mgos_sys_config_get_rpc_mqtt_enable()) {
+  if (mgos_rpc_get_global() != NULL && mgos_sys_config_get_rpc_mqtt_enable() &&
+      mgos_sys_config_get_mqtt_enable()) {
     struct mg_rpc_channel *mch =
         mg_rpc_channel_mqtt(mg_mk_str(mgos_sys_config_get_device_id()));
     if (mch == NULL) return MGOS_INIT_MG_RPC_FAILED;
