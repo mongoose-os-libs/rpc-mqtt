@@ -65,7 +65,6 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
     return;
   }
   struct mg_mqtt_message *msg = (struct mg_mqtt_message *) ev_data;
-  if (msg->qos > 0) mg_mqtt_puback(nc, msg->message_id);
   char *bare_topic = mgos_rpc_mqtt_topic_name(
       mg_mk_str(mgos_sys_config_get_device_id()), false);
   size_t bare_topic_len = strlen(bare_topic);
@@ -82,6 +81,7 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
                                msg->topic.len - bare_topic_len - 1 /* slash */);
     ch->ev_handler(ch, MG_RPC_CHANNEL_FRAME_RECD_PARSED, &frame);
   }
+  (void) nc;
 }
 
 static void mgos_rpc_mqtt_handler(struct mg_connection *nc, int ev,
