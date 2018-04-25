@@ -31,33 +31,42 @@
 
 #include "mgos_mqtt.h"
 
-#define CH_FLAGS(ch) ((uintptr_t)(ch)->channel_data)
-#define CH_FLAGS_SET(ch, v) (ch)->channel_data = (void *) (uintptr_t)(v)
-#define CH_F_SUB1_ACKED 1
-#define CH_F_SUB2_ACKED 2
-#define CHANNEL_OPEN (CH_F_SUB1_ACKED | CH_F_SUB2_ACKED)
+union mqtt_ch_data {
+  uintptr_t v;
+  unsigned int open : 1;
+  unsigned int sub_en : 1;
+  unsigned int sub_acked : 1;
+  unsigned int wc_sub_en : 1;
+  unsigned int wc_sub_acked : 1;
+  unsigned int sub_topic_len : 8;
+};
 
-static char *mgos_rpc_mqtt_topic_name(const struct mg_str device_id,
-                                      bool wildcard) {
-  char *topic = NULL;
-  if (mgos_sys_config_get_rpc_mqtt_topic() != NULL) {
-    mg_asprintf(&topic, 0, "%s%s", mgos_sys_config_get_rpc_mqtt_topic(),
-                (wildcard ? "/#" : ""));
-  } else {
-    mg_asprintf(&topic, 0, "%.*s/rpc%s", (int) device_id.len,
-                (device_id.p ? device_id.p : ""), (wildcard ? "/#" : ""));
+static struct mg_str mgos_rpc_mqtt_get_topic(const char *fmt,
+                                             const struct mg_str arg,
+                                             bool wildcard) {
+  struct mg_str topic = MG_NULL_STR, topic2 = MG_NULL_STR;
+  mg_asprintf((char **) &topic.p, 0, fmt, (int) arg.len, arg.p);
+  if (wildcard && topic.p != NULL) {
+    mg_asprintf((char **) &topic2.p, 0, "%s/#", topic.p);
+    free((void *) topic.p);
+    topic = topic2;
   }
+  if (topic.p != NULL) topic.len = strlen(topic.p);
   return topic;
 }
 
 static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
                                       void *ev_data, void *user_data) {
   struct mg_rpc_channel *ch = (struct mg_rpc_channel *) user_data;
+  union mqtt_ch_data *chd = (union mqtt_ch_data *) &ch->channel_data;
   if (ev == MG_EV_MQTT_SUBACK) {
-    if (!(CH_FLAGS(ch) & CH_F_SUB1_ACKED)) {
-      CH_FLAGS_SET(ch, CH_FLAGS(ch) | CH_F_SUB1_ACKED);
-    } else if (!(CH_FLAGS(ch) & CH_F_SUB2_ACKED)) {
-      CH_FLAGS_SET(ch, CH_FLAGS(ch) | CH_F_SUB2_ACKED);
+    if (chd->sub_en && !chd->sub_acked) {
+      chd->sub_acked = true;
+    } else if (chd->wc_sub_en && !chd->wc_sub_acked) {
+      chd->wc_sub_acked = true;
+    }
+    if ((chd->sub_acked || !chd->sub_en) &&
+        (chd->wc_sub_acked || !chd->wc_sub_en)) {
       ch->ev_handler(ch, MG_RPC_CHANNEL_OPEN, NULL);
     }
     return;
@@ -65,20 +74,16 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
     return;
   }
   struct mg_mqtt_message *msg = (struct mg_mqtt_message *) ev_data;
-  char *bare_topic = mgos_rpc_mqtt_topic_name(
-      mg_mk_str(mgos_sys_config_get_device_id()), false);
-  size_t bare_topic_len = strlen(bare_topic);
-  free(bare_topic);
-
-  if (bare_topic_len == msg->topic.len) {
+  if (chd->sub_topic_len == msg->topic.len) {
     ch->ev_handler(ch, MG_RPC_CHANNEL_FRAME_RECD, &msg->payload);
   } else {
     struct mg_rpc_frame frame;
     /* Parse frame and ignore errors: they will be handled afterwards */
     mg_rpc_parse_frame(msg->payload, &frame);
     /* Replace method with the one from the topic name */
-    frame.method = mg_mk_str_n(msg->topic.p + bare_topic_len + 1 /* slash */,
-                               msg->topic.len - bare_topic_len - 1 /* slash */);
+    frame.method =
+        mg_mk_str_n(msg->topic.p + chd->sub_topic_len + 1 /* slash */,
+                    msg->topic.len - chd->sub_topic_len - 1 /* slash */);
     ch->ev_handler(ch, MG_RPC_CHANNEL_FRAME_RECD_PARSED, &frame);
   }
   (void) nc;
@@ -87,13 +92,14 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
 static void mgos_rpc_mqtt_handler(struct mg_connection *nc, int ev,
                                   void *ev_data, void *user_data) {
   struct mg_rpc_channel *ch = (struct mg_rpc_channel *) user_data;
-  if (ev == MG_EV_CLOSE) {
-    if (nc->flags & CHANNEL_OPEN) {
-      ch->ev_handler(ch, MG_RPC_CHANNEL_CLOSED, NULL);
-      CH_FLAGS_SET(ch, CH_FLAGS(ch) & ~CHANNEL_OPEN);
-    }
+  union mqtt_ch_data *chd = (union mqtt_ch_data *) &ch->channel_data;
+  if (ev == MG_EV_CLOSE && chd->open) {
+    ch->ev_handler(ch, MG_RPC_CHANNEL_CLOSED, NULL);
+    chd->open = false;
+    chd->sub_acked = chd->wc_sub_acked = false;
   }
   (void) ev_data;
+  (void) nc;
 }
 
 static void mg_rpc_channel_mqtt_ch_connect(struct mg_rpc_channel *ch) {
@@ -109,17 +115,26 @@ static bool mg_rpc_channel_mqtt_send_frame(struct mg_rpc_channel *ch,
                                            const struct mg_str f) {
   struct mg_connection *nc = mgos_mqtt_get_global_conn();
   if (nc == NULL) return false;
-  struct json_token dst;
-  if (json_scanf(f.p, f.len, "{dst:%T}", &dst) != 1) {
-    LOG(LL_ERROR,
-        ("Cannot reply to RPC over MQTT, no dst: [%.*s]", (int) f.len, f.p));
+  const char *pub_topic_fmt = mgos_sys_config_get_rpc_mqtt_pub_topic();
+  if (pub_topic_fmt == NULL) {
+    LOG(LL_ERROR, ("pub_topic is not set, cannot send frame."));
     return false;
   }
-  char *topic = mgos_rpc_mqtt_topic_name(mg_mk_str_n(dst.ptr, dst.len), false);
-  mg_mqtt_publish(nc, topic, mgos_mqtt_get_packet_id(), MG_MQTT_QOS(1), f.p,
-                  f.len);
-  LOG(LL_DEBUG, ("Published [%.*s] to topic [%s]", (int) f.len, f.p, topic));
-  free(topic);
+  struct json_token dst = JSON_INVALID_TOKEN;
+  if (strchr(pub_topic_fmt, '%') != NULL) {
+    if (json_scanf(f.p, f.len, "{dst:%T}", &dst) != 1) {
+      LOG(LL_ERROR,
+          ("Cannot reply to RPC over MQTT, no dst: [%.*s]", (int) f.len, f.p));
+      return false;
+    }
+  }
+  struct mg_str topic =
+      mgos_rpc_mqtt_get_topic(mgos_sys_config_get_rpc_mqtt_pub_topic(),
+                              mg_mk_str_n(dst.ptr, dst.len), false);
+  mg_mqtt_publish(nc, topic.p, mgos_mqtt_get_packet_id(),
+                  MG_MQTT_QOS(mgos_sys_config_get_rpc_mqtt_qos()), f.p, f.len);
+  LOG(LL_DEBUG, ("Published [%.*s] to topic [%s]", (int) f.len, f.p, topic.p));
+  free((void *) topic.p);
   mgos_invoke_cb(frame_sent, ch, false /* from_isr */);
   return true;
 }
@@ -155,7 +170,8 @@ static char *mg_rpc_channel_mqtt_get_info(struct mg_rpc_channel *ch) {
 }
 
 struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
-  char *topic = mgos_rpc_mqtt_topic_name(device_id, true);
+  struct mg_str topic = mgos_rpc_mqtt_get_topic(
+      mgos_sys_config_get_rpc_mqtt_sub_topic(), device_id, true);
   struct mg_rpc_channel *ch = (struct mg_rpc_channel *) calloc(1, sizeof(*ch));
   ch->ch_connect = mg_rpc_channel_mqtt_ch_connect;
   ch->send_frame = mg_rpc_channel_mqtt_send_frame;
@@ -168,15 +184,22 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
   ch->get_authn_info = mg_rpc_channel_mqtt_get_authn_info;
   ch->get_info = mg_rpc_channel_mqtt_get_info;
 
-  /* subscribe on both wildcard topic, and bare /rpc topic */
-  mgos_mqtt_global_subscribe(mg_mk_str(topic), mgos_rpc_mqtt_sub_handler, ch);
-  mgos_mqtt_global_subscribe(mg_mk_str_n(topic, strlen(topic) - 2 /* /# */),
+  union mqtt_ch_data *chd = (union mqtt_ch_data *) &ch->channel_data;
+  chd->v = 0;
+  chd->sub_en = true;
+  chd->sub_topic_len = topic.len - 2 /* /# */;
+
+  mgos_mqtt_global_subscribe(mg_mk_str_n(topic.p, chd->sub_topic_len),
                              mgos_rpc_mqtt_sub_handler, ch);
+  if (mgos_sys_config_get_rpc_mqtt_sub_wc()) {
+    chd->wc_sub_en = true;
+    mgos_mqtt_global_subscribe(topic, mgos_rpc_mqtt_sub_handler, ch);
+  }
   /* For CLOSE event. */
   mgos_mqtt_add_global_handler(mgos_rpc_mqtt_handler, ch);
 
-  LOG(LL_INFO, ("%p %s", ch, topic));
-  free(topic);
+  LOG(LL_INFO, ("%p %.*s", ch, (int) topic.len - 2, topic.p));
+  free((void *) topic.p);
   return ch;
 }
 

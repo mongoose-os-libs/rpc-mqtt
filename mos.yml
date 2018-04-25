@@ -10,7 +10,11 @@ includes:
 config_schema:
   - ["rpc.mqtt", "o", {title: "RPC over MQTT settings"}]
   - ["rpc.mqtt.enable", "b", true, {title: "Enable RPC over MQTT"}]
-  - ["rpc.mqtt.topic", "s", "", {title: "Topic to use for RPC requests and responses. The default is ${device.id}/rpc"}]
+  - ["rpc.mqtt.pub_topic", "s", "%.*s/rpc", {title: "Topic to post outgoing frames to. Argument to the format string is the frame's destination."}]
+  - ["rpc.mqtt.sub_topic", "s", "%.*s/rpc", {title: "Topic to accept incoming frames on. Argument to the format string is device.id"}]
+  - ["rpc.mqtt.sub_wc", "b", true, {title: "Also subscribe to wildcard topic"}]
+  - ["rpc.mqtt.qos", "i", 1, {title: "QoS for pub and sub"}]
+
 libs:
   - origin: https://github.com/mongoose-os-libs/mqtt
   - origin: https://github.com/mongoose-os-libs/rpc-common
