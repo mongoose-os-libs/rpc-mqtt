@@ -15,6 +15,12 @@ config_schema:
   - ["rpc.mqtt.sub_wc", "b", true, {title: "Also subscribe to wildcard topic"}]
   - ["rpc.mqtt.qos", "i", 1, {title: "QoS for pub and sub"}]
 
+init_after:
+  - aws
+  - azure
+  - gcp
+  - watson
+
 libs:
   - origin: https://github.com/mongoose-os-libs/mqtt
   - origin: https://github.com/mongoose-os-libs/rpc-common

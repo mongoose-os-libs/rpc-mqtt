@@ -33,12 +33,14 @@
 
 union mqtt_ch_data {
   uintptr_t v;
-  unsigned int open : 1;
-  unsigned int sub_en : 1;
-  unsigned int sub_acked : 1;
-  unsigned int wc_sub_en : 1;
-  unsigned int wc_sub_acked : 1;
-  unsigned int sub_topic_len : 8;
+  struct {
+    unsigned int open : 1;
+    unsigned int sub_en : 1;
+    unsigned int sub_acked : 1;
+    unsigned int wc_sub_en : 1;
+    unsigned int wc_sub_acked : 1;
+    unsigned int sub_topic_len : 8;
+  };
 };
 
 static struct mg_str mgos_rpc_mqtt_get_topic(const char *fmt,
@@ -198,14 +200,13 @@ struct mg_rpc_channel *mg_rpc_channel_mqtt(const struct mg_str device_id) {
   /* For CLOSE event. */
   mgos_mqtt_add_global_handler(mgos_rpc_mqtt_handler, ch);
 
-  LOG(LL_INFO, ("%p %.*s", ch, (int) topic.len - 2, topic.p));
+  LOG(LL_INFO, ("%p %.*s", ch, (int) chd->sub_topic_len, topic.p));
   free((void *) topic.p);
   return ch;
 }
 
 bool mgos_rpc_mqtt_init(void) {
-  if (mgos_rpc_get_global() != NULL && mgos_sys_config_get_rpc_mqtt_enable() &&
-      mgos_sys_config_get_mqtt_enable()) {
+  if (mgos_rpc_get_global() != NULL && mgos_sys_config_get_rpc_mqtt_enable()) {
     struct mg_rpc_channel *mch =
         mg_rpc_channel_mqtt(mg_mk_str(mgos_sys_config_get_device_id()));
     if (mch == NULL) return MGOS_INIT_MG_RPC_FAILED;
