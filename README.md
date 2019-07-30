@@ -25,13 +25,13 @@ Response will be published to `foo/rpc`.
 `mos` tool supports RPC over MQTT via the `mqtt`:
 
 ```bash
-$ mos --port mqtt://iot.eclipse.org/esp8266_DA7E15 call Config.Get
+$ mos --port mqtt://iot.eclipse.org/esp8266_DA7E15 call Sys.GetInfo
 ```
 
 For brokers that require TLS, `mqtts` schema should be used:
 
 ```bash
-$ mos --port mqtts://iot.eclipse.org/esp8266_DA7E15 call Config.Get
+$ mos --port mqtts://iot.eclipse.org/esp8266_DA7E15 call Sys.GetInfo
 ```
 
 For brokers that require TLS client authentication (e.g. AWS), cert and file should be supplied:
