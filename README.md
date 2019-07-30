@@ -22,13 +22,13 @@ Response will be published to `foo/rpc`.
 
 ### mos tool support
 
-`mos` tool supports RPC over MQTT via the `mqtt`:
+`mos` tool supports RPC over MQTT via the `mqtt` port schema:
 
 ```bash
 $ mos --port mqtt://iot.eclipse.org/esp8266_DA7E15 call Sys.GetInfo
 ```
 
-For brokers that require TLS, `mqtts` schema should be used:
+For brokers that require TLS, `mqtts` should be used:
 
 ```bash
 $ mos --port mqtts://iot.eclipse.org/esp8266_DA7E15 call Sys.GetInfo
