@@ -86,11 +86,9 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
     return;
   }
 
-  if (src.len == 0) {
-    if (id.len > 0 || method.len > 0) {
-      LOG(LL_ERROR, ("Drop frame without src"));
-      return;
-    }
+  if (method.len > 0 && id.len > 0 && src.len == 0) {
+    LOG(LL_ERROR, ("Drop frame without src"));
+    return;
   }
 
   if (chd->sub_topic_len == msg->topic.len) {
