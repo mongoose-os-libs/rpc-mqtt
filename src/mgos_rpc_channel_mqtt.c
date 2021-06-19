@@ -76,6 +76,21 @@ static void mgos_rpc_mqtt_sub_handler(struct mg_connection *nc, int ev,
     return;
   }
   struct mg_mqtt_message *msg = (struct mg_mqtt_message *) ev_data;
+
+  struct json_token id = JSON_INVALID_TOKEN;
+  struct json_token src = JSON_INVALID_TOKEN;
+  struct json_token method = JSON_INVALID_TOKEN;
+
+  if (json_scanf(msg->payload.p, msg->payload.len, "{id:%T src:%T method:%T}",
+                 &id, &src, &method) < 1) {
+    return;
+  }
+
+  if (method.len > 0 && id.len > 0 && src.len == 0) {
+    LOG(LL_ERROR, ("Drop frame without src"));
+    return;
+  }
+
   if (chd->sub_topic_len == msg->topic.len) {
     ch->ev_handler(ch, MG_RPC_CHANNEL_FRAME_RECD, &msg->payload);
   } else {
