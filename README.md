@@ -15,8 +15,12 @@ Responses are published to `${src}/rpc`, where `${src}` is taken from the reques
 ### Request
 
 Published to `esp8266_DA7E15/rpc`:
-```
+```json
+# without parameters
 { "id": 123, "src": "foo", "method": "Sys.GetInfo"}
+
+# with parameters
+{ "id": 123, "src": "foo", "method": "Config.Set", "params": { "config": { "debug": { "level": 3 } } } }
 ```
 Response will be published to `foo/rpc`.
 
